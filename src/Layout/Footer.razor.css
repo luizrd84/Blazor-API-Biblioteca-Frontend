@@ -1,0 +1,16 @@
+
+
+.footer {
+    display: flex;
+    justify-content: center; /* centro horizontal */
+    align-items: center; /* centro vertical */
+
+    background: #1e1e2f;
+    height: 60px;
+    padding: 0 30px;
+}
+
+.footer p {
+    color: white;
+    font-size: 18px;
+}

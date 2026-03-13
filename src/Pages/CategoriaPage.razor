@@ -1,0 +1,88 @@
+﻿@page "/categorias"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using _03Blazor_Biblioteca.src.Components
+@using src.Models
+@rendermode InteractiveServer
+@inject IHttpClientFactory factory
+@using System.Text.Json
+@* @using System.Globalization *@
+
+
+<div class="titulo">
+    <h1>Categorias</h1>
+</div>
+
+
+<div class="subtitulo">
+    <h2>Lista com todas as categorias cadastradas</h2>
+</div>
+
+<div class="exibir-tabela">
+    <QuickGrid Items="categorias.AsQueryable()" TGridItem="Categoria" Pagination="paginacao" class="table">
+        <PropertyColumn Property="@(c => c.Id)" Title="Id" />
+        <PropertyColumn Property="@(c => c.Nome)" Title="Nome" />                
+    </QuickGrid>
+    <Paginator State="paginacao" />
+</div>
+
+
+<Modal 
+    Mostrar="@mostrarModal"
+    MostrarChanged="@((bool v) => mostrarModal = v)"
+    Titulo="@tituloModal"
+    Mensagem="@mensagemModal" 
+/>
+
+
+
+@code {
+       
+    string msg = "";
+
+    //Variaveis para o GetAll    
+    private List<Categoria> categorias = new();
+    private Categoria categoriaAtual = new(); 
+    PaginationState paginacao = new()    {
+        ItemsPerPage = 10
+    };
+        
+    //Variaveis Modal
+    bool mostrarModal = false;
+    string tituloModal = "Erro";
+    string mensagemModal = "Nenhum usuário encontrado";
+
+
+    protected override void OnInitialized()    {
+
+    }
+
+    protected override async Task OnInitializedAsync()    {
+        await GettAllAutores();
+    }
+
+    async Task GettAllAutores() {        
+        string api = "api/categorias";
+        categorias = new();
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            categorias = await response.Content.ReadFromJsonAsync<List<Categoria>>();           
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            AbrirModal("Aviso", "Erro ao carregar os autores.");
+        }
+    }
+
+    
+
+    void AbrirModal(string titulo, string mensagem)    {
+        tituloModal = titulo;
+        mensagemModal = mensagem;
+        mostrarModal = true;
+    }
+
+}
+
+

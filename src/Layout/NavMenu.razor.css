@@ -1,0 +1,33 @@
+.top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+    padding: 0 30px;
+    background: #1e1e2f;
+}
+
+.menu ::deep a {
+    text-decoration: none;
+    color: #dcdcdc;
+    padding: 8px 14px;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+    .menu ::deep a:hover {
+        background: #34344a;
+        color: white;
+    }
+
+    .menu ::deep a.active {
+        background: #4c6fff;
+        color: white;
+    }
+
+.logo ::deep a {
+    text-decoration: none;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+}

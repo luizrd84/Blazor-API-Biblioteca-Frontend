@@ -1,0 +1,75 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using _03Blazor_Biblioteca.src.Components
+@using src.Models
+@rendermode InteractiveServer
+@inject IHttpClientFactory factory
+@using System.Text.Json
+
+<div class="home-container">
+
+    <h1 class="home-title">Biblioteca API</h1>
+
+    <p class="home-description">
+        Aplicação web desenvolvida em <strong>C#</strong> utilizando o framework
+        <strong>Blazor</strong> da plataforma <strong>.NET</strong> para consumo
+        de dados de uma API REST desenvolvida em <strong>Node.js</strong>.
+    </p>
+
+    <section class="home-section">
+        <h2>Backend</h2>
+
+        <p>
+            O backend foi desenvolvido em Node.js e utiliza o banco de dados PostgreSQL.
+            Para facilitar a execução do banco de dados, foi utilizado Docker com Docker Compose.
+            O código da API Backend pode ser acessado no GitHub:
+        </p>
+
+        <a class="github-link"
+               href="https://github.com/luizrd84/Node.js-API-Biblioteca"
+               target="_blank">
+            Node.js-API-Biblioteca
+        </a>
+    </section>
+
+    <section class="home-section">
+        <h2>Funcionalidades</h2>
+
+        <p>Consultar, Incluir, Alterar e Excluir:</p>
+        <ul class="home-list">
+            <li>Autores</li>
+            <li>Livros
+                <ul>
+                    <li>Categorias</li>
+                    <li>Avaliações</li>
+                </ul>
+            </li>
+            <li>Usuários
+                <ul>
+                    <li>Empréstimos</li>
+                </ul>
+            </li>
+
+            <li>Integração com API REST</li>
+        </ul>
+    </section>
+
+    <section class="home-section">
+        <h2>Tecnologias</h2>
+
+        <ul class="home-list">
+            <li>C#</li>
+            <li>.NET / Blazor</li>
+            <li>Node.js</li>
+            <li>PostgreSQL</li>
+            <li>Docker / Docker Compose</li>
+        </ul>
+    </section>
+
+    <p class="home-footer">
+        Projeto desenvolvido para fins de estudo e prática de desenvolvimento
+        de APIs REST e integração entre frontend e backend.
+        Utilize o menu superior para acessar as funcionalidades disponíveis.
+    </p>
+
+</div>

@@ -1,0 +1,30 @@
+﻿@if (Mostrar){
+    <div class="modal-overlay">
+        <div class="modal-box">
+
+            <h3>@Titulo</h3>
+            <p>@Mensagem</p>
+            <button @onclick="Fechar" class="btn-ok">
+                @TextoBotao
+            </button>
+
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter] public bool Mostrar { get; set; }
+
+    [Parameter] public EventCallback<bool> MostrarChanged { get; set; }
+
+    [Parameter] public string Titulo { get; set; } = "Aviso";
+
+    [Parameter] public string Mensagem { get; set; } = "Operação realizada.";
+
+    [Parameter] public string TextoBotao { get; set; } = "OK";
+
+    private async Task Fechar()    {
+        await MostrarChanged.InvokeAsync(false);
+    }
+}

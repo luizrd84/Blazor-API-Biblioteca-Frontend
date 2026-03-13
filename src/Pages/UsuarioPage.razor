@@ -1,0 +1,450 @@
+﻿@page "/usuarios"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using _03Blazor_Biblioteca.src.Components
+@using src.Models
+@rendermode InteractiveServer
+@inject IHttpClientFactory factory
+@using System.Text.Json
+
+
+
+<div class="titulo">
+    <h1>Usuários</h1>
+</div>
+
+
+<div class="subtitulo">
+    <h2>Lista com todos os usuários cadastrados</h2>
+</div>
+
+<div class="exibir-tabela">
+    <QuickGrid Items="usuarios.AsQueryable()" TGridItem="Usuario" Pagination="paginacao" class="table">
+        <PropertyColumn Property="@(u => u.Id)" Title="Id" />
+        <TemplateColumn Title="Nome">
+            <span class="texto-cortado" title="@context.Nome">
+                @context.Nome
+            </span>
+        </TemplateColumn>
+        <PropertyColumn Property="@(p => p.Email)" Title="E-mail" />       
+        <TemplateColumn Title="Data do Cadastro">
+            @(context.Cadastro.ToString("dd/MM/yyyy"))
+        </TemplateColumn>
+        <TemplateColumn Title="Ações">
+            <button class="btn btn-sm btn-primary" @onclick="() => Editar(context)">
+                Editar
+            </button>
+            <button class="btn btn-sm btn-danger" @onclick="() => Excluir(context)">
+                Excluir
+            </button>
+        </TemplateColumn>
+    </QuickGrid>
+    <Paginator State="paginacao" />
+</div>
+
+
+
+@if (exibirPainelInicial) {
+    <div class="acessar-cadastro">
+        <h3>Para cadastrar um novo usuário, clique abaixo:</h3>
+        <button class="mt-3 btn btn-primary" @onclick="ExibirPainelCadastro">
+            Cadastrar usuário
+        </button>        
+    </div>
+}
+
+@if (exibirPainelCadastro) {
+    <div class="form-container">
+
+        <div class="subtitulo">
+            <h2>@menuInclusaoTitulo</h2>          
+        </div>
+
+        <EditForm Model="@usuarioAtual" OnValidSubmit="Confirmar" OnInvalidSubmit="TratarErros" >
+            <DataAnnotationsValidator /> 
+            <label class="text-muted mt-2">Nome</label>
+            <InputText @bind-Value=usuarioAtual.Nome class="form-control" name="nome"></InputText>
+            <ValidationMessage For="@(() => usuarioAtual.Nome)" />
+            <label class="text-muted mt-2">E-mail</label>
+            <InputText @bind-Value=usuarioAtual.Email class="form-control" name="email"></InputText>
+            <ValidationMessage For="@(() => usuarioAtual.Email)" />
+            @* <InputNumber TValue="double" @bind-Value=produtoAtual.Preco class="form-control"></InputNumber>
+            <ValidationMessage For="@(() => produtoAtual.Preco)" /> *@
+            <button type="submit" class="mt-3 btn btn-primary" >
+                @menuInclusaoBotao
+            </button>
+        </EditForm>
+    </div>
+}
+
+<div class="subtitulo">
+    <h2>Busca por Nome</h2>
+</div>
+
+
+<div class="form-container">
+    <EditForm Model="@buscaPorNome" OnValidSubmit="PesquisaPorNome">
+        <label class="text-muted mt-3">Nome</label>
+        <InputText @bind-Value=buscaPorNome class="form-control" name="Nome"></InputText>
+        <button type="submit" class="mt-3 btn btn-primary">Pesquisar</button>
+    </EditForm>
+</div>
+
+@if(usuariosByName.Count > 0) {
+    <div class="exibir-tabela">
+        <QuickGrid Items="usuariosByName.AsQueryable()" TGridItem="Usuario" Pagination="paginacaoGetByName" class="table" >
+            <PropertyColumn Property="@(u => u.Id)" Title="Id" />
+            <TemplateColumn Title="Nome">
+                <span class="texto-cortado" title="@context.Nome">
+                    @context.Nome
+                </span>
+            </TemplateColumn>
+            <PropertyColumn Property="@(p => p.Email)" Title="E-mail" />            
+            <TemplateColumn Title="Data do Cadastro">
+                @(context.Cadastro.ToString("dd/MM/yyyy"))
+            </TemplateColumn>
+        </QuickGrid>
+        <Paginator State="paginacaoGetByName" />
+    </div>
+}
+
+<div class="subtitulo">
+    <h2>Busca por Id</h2>
+    <p>Mostra emprestimos e avaliações do usuário</p>
+</div>
+
+<div class="form-container">
+    <EditForm Model="@buscaPorId" OnValidSubmit="PesquisaPorId" OnInvalidSubmit="TratarErros" >
+        <label class="text-muted mt-3">Id</label>
+        <InputNumber TValue="int" @bind-Value="buscaPorId" class="form-control" name="Id"></InputNumber>
+        <button type="submit" class="mt-3 btn btn-primary">Pesquisar</button>
+    </EditForm>
+</div>
+
+@if(usuarioById.Id != 0) {
+    <div class="dados-usuario-busca-id">        
+        <h3>Dados do usuário:</h3>
+        <p>Nome: @usuarioById.Nome</p>
+        <p>E-mail: @usuarioById.Email</p>
+        <p>Data do Cadastro: @usuarioById.Cadastro.ToString("dd/MM/yyyy")</p>
+    </div>
+}
+
+@if (usuarioEmprestimos.Count > 0){
+    <div class="subtitulo">
+        <h3> Empréstimos do usuário:</h3>
+    </div>
+    <div class="exibir-tabela">
+        <QuickGrid Items="usuarioEmprestimos.AsQueryable()" TGridItem="UsuarioEmprestimos" Pagination="paginacaoEmprestimos" class="table">
+            <TemplateColumn Title="Título do Livro">
+                <span class="texto-cortado" title="@context.Titulo">
+                    @context.Titulo
+                </span>
+            </TemplateColumn>
+            <PropertyColumn Property="@(u => u.Ano)" Title="Ano Lançamento" />
+            <TemplateColumn Title="Data do Empréstimo">
+                @(context.Data_emprestimo.ToString("dd/MM/yyyy") ?? "-")
+            </TemplateColumn>
+            <TemplateColumn Title="Data da Devolução">
+                @(context.Data_devolucao?.ToString("dd/MM/yyyy") ?? "-")
+            </TemplateColumn>
+        </QuickGrid>
+        <Paginator State="paginacaoEmprestimos" />
+    </div>
+}
+@if (usuarioById.Id > 0 && usuarioEmprestimos.Count == 0){   
+    <div class="subtitulo">
+        <h3> Usuário não fez empréstimos </h3>
+    </div>
+}
+
+@if (usuarioAvaliacoes.Count > 0){
+    <div class="subtitulo">
+        <h3> Avaliações do usuário:</h3>
+    </div>
+    <div class="exibir-tabela">
+        <QuickGrid Items="usuarioAvaliacoes.AsQueryable()" TGridItem="UsuarioAvaliacoes" Pagination="paginacaoAvaliacoes" class="table">
+            <TemplateColumn Title="Título do Livro">
+                <span class="texto-cortado" title="@context.Titulo">
+                    @context.Titulo
+                </span>
+            </TemplateColumn>            
+            <PropertyColumn Property="@(u => u.Nota)" Title="Nota" />            
+            <TemplateColumn Title="Comentário">
+                <span class="texto-cortado" title="@context.Comentario">
+                    @context.Comentario
+                </span>
+            </TemplateColumn>
+        </QuickGrid>
+        <Paginator State="paginacaoEmprestimos" />
+    </div>
+}
+@if (usuarioById.Id > 0 && usuarioAvaliacoes.Count == 0) {
+    <div class="subtitulo">
+        <h3> Usuário não deixou avaliações </h3>
+    </div>
+}
+
+
+<Modal 
+    Mostrar="@mostrarModal"
+    MostrarChanged="@((bool v) => mostrarModal = v)"
+    Titulo="@tituloModal"
+    Mensagem="@mensagemModal" 
+/>
+
+
+
+
+@code {
+    private Boolean exibirPainelCadastro = false;
+    private Boolean exibirPainelInicial = true;
+    private string edicaoOuInclusao = "";
+    private string menuInclusaoTitulo = "";
+    private string menuInclusaoBotao = "";      
+
+    //Exibir via modal isso???? ver como fazer
+    string msg = "";
+
+    //Variaveis par ao GetAll    
+    private List<Usuario> usuarios = new();
+    private Usuario usuarioAtual = new(); 
+    PaginationState paginacao = new()    {
+        ItemsPerPage = 10
+    };
+
+    //Variaveis par ao GetByName
+    private List<Usuario> usuariosByName = new();
+    private string buscaPorNome = "";
+    PaginationState paginacaoGetByName = new()    {
+        ItemsPerPage = 10
+    };
+
+    //Variaveis par ao GetById
+    private int buscaPorId = 0;
+    private Usuario usuarioById = new();    
+    private List<UsuarioEmprestimos> usuarioEmprestimos = new();
+    private List<UsuarioAvaliacoes> usuarioAvaliacoes = new();
+    PaginationState paginacaoEmprestimos = new()    {
+        ItemsPerPage = 10
+    };
+    PaginationState paginacaoAvaliacoes = new()    {
+        ItemsPerPage = 10
+    };
+
+    //Variaveis Modal
+    bool mostrarModal = false;
+    string tituloModal = "Erro";
+    string mensagemModal = "Nenhum usuário encontrado";
+
+
+
+    protected override void OnInitialized()    {
+        exibirPainelCadastro = false;
+        exibirPainelInicial = true;
+    }
+
+    protected override async Task OnInitializedAsync()    {
+        await GettAllUsuarios();
+    }
+
+    async Task GettAllUsuarios() {        
+        string api = "api/usuarios";
+        usuarios = new();
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            usuarios = await response.Content.ReadFromJsonAsync<List<Usuario>>();           
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            AbrirModal("Aviso", "Erro ao carregar os usuários.");
+        }
+    }
+
+    async Task PostUsuario() {       
+        string api = "api/usuarios";
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.PostAsJsonAsync(api, usuarioAtual);
+        if (response.IsSuccessStatusCode) {
+            msg = "Usuário incluído com sucesso";    
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();    
+        }
+        //Atualizar a lista de usuários
+        await GettAllUsuarios();
+    }
+
+    async Task PutUsuario()    {
+        string api = "api/usuarios/"+usuarioAtual.Id;
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.PutAsJsonAsync(api, usuarioAtual);
+        if (response.IsSuccessStatusCode)        {
+            msg = "Usuário atualizado com sucesso";
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+        }
+        //Atualizar a lista de usuários
+        await GettAllUsuarios();
+    }
+
+
+
+    async Task Excluir(Usuario usuario)    {
+
+        string api = $"api/usuarios/{usuario.Id}";
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.DeleteAsync(api);
+        if (response.IsSuccessStatusCode)        {
+            msg = "Usuário deletado com sucesso";
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+        }
+        //Atualizar a lista de usuários
+        await GettAllUsuarios();      
+        EsconderPainelCadastro(); 
+        AbrirModal("Efetivado", "Usuário deletado com sucesso.");
+    }
+
+
+
+    //getById
+    async Task PesquisaPorId()    {
+        usuarioById = new();
+        usuarioAvaliacoes = new();
+        usuarioEmprestimos = new();
+
+        if (buscaPorId <= 0)   {
+            msg = "Digite um id";
+            AbrirModal("Aviso", "Escolha um valor válido.");
+            return;
+        }
+
+        //GetById
+        string api = $"api/usuarios/{buscaPorId}";        
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            if (response.Content.Headers.ContentLength == 0)            {
+                AbrirModal("Aviso", "Usuário não encontrado");
+                return;
+            }
+            usuarioById = await response.Content.ReadFromJsonAsync<Usuario>();   
+
+            //GetEmprestimos
+            api = $"api/usuarios/{buscaPorId}/emprestimos";            
+            httpClient = factory.CreateClient("api");
+            response = await httpClient.GetAsync(api);
+
+            if (response.IsSuccessStatusCode)            {
+                usuarioEmprestimos = await response.Content.ReadFromJsonAsync<List<UsuarioEmprestimos>>();
+            }
+            else            {
+                msg = await response.Content.ReadAsStringAsync();
+            }
+            //GetAvaliacoes
+            api = $"api/usuarios/{buscaPorId}/avaliacoes";            
+            httpClient = factory.CreateClient("api");
+            response = await httpClient.GetAsync(api);
+
+            if (response.IsSuccessStatusCode)            {
+                usuarioAvaliacoes = await response.Content.ReadFromJsonAsync<List<UsuarioAvaliacoes>>();
+            }
+            else            {
+                msg = await response.Content.ReadAsStringAsync();
+            }
+
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            Console.WriteLine(msg);
+            AbrirModal("Aviso", "A busca realizada não retornou dados.");
+        }
+
+    }
+
+    //GetByName
+    async Task PesquisaPorNome()    {
+        if (string.IsNullOrWhiteSpace(buscaPorNome))        {
+            msg = "Digite um nome";
+            return;
+        }
+        string api = $"api/usuarios/busca?nome={buscaPorNome}";
+        usuariosByName = new();
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            usuariosByName = await response.Content.ReadFromJsonAsync<List<Usuario>>();
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            AbrirModal("Aviso", "A busca realizada não retornou dados.");  
+        }
+    }
+
+    async Task Confirmar()    {
+        Console.WriteLine("edicaoouinclusao = " + edicaoOuInclusao);
+        if (edicaoOuInclusao == "inclusao")        {            
+            await PostUsuario();
+            AbrirModal("Efetivado","Usuário cadastrado com sucesso.");
+        }
+        else if (edicaoOuInclusao == "alteracao")        {            
+            await PutUsuario();
+            AbrirModal("Efetivado", "Usuário atualizado com sucesso.");
+        }
+        else        {
+            Console.WriteLine("Erro ao incluir/atualizar dados.");
+        }
+        EsconderPainelCadastro();
+    }
+
+
+    void Editar(Usuario usuario)    {
+        Console.WriteLine("Editar");
+
+        exibirPainelInicial = false;
+        exibirPainelCadastro = true;
+
+        usuarioAtual.Nome = usuario.Nome;
+        usuarioAtual.Id = usuario.Id;
+        usuarioAtual.Email = usuario.Email;
+        usuarioAtual.Cadastro = usuario.Cadastro;
+
+        edicaoOuInclusao = "alteracao";
+        menuInclusaoTitulo = "Alteração de Usuário";
+        menuInclusaoBotao = "Salvar dados";
+    }
+
+    void ExibirPainelCadastro()    {
+        exibirPainelInicial = false;
+        exibirPainelCadastro = true;
+        usuarioAtual = new();
+        edicaoOuInclusao = "inclusao";
+        menuInclusaoTitulo = "Cadastrar um novo Usuário";
+        menuInclusaoBotao = "Incluir Usuário";
+    }
+
+    void EsconderPainelCadastro()    {
+        exibirPainelInicial = true;
+        exibirPainelCadastro = false;
+        usuarioAtual = new();
+    }
+
+    void TratarErros()    {
+        Console.WriteLine("Dados inválidos.");
+    }
+
+    void AbrirModal(string titulo, string mensagem)    {
+        tituloModal = titulo;
+        mensagemModal = mensagem;
+        mostrarModal = true;
+    }
+
+}
+
+

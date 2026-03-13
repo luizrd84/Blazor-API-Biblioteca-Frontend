@@ -1,0 +1,470 @@
+﻿@page "/autores"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using _03Blazor_Biblioteca.src.Components
+@using src.Models
+@rendermode InteractiveServer
+@inject IHttpClientFactory factory
+@using System.Text.Json
+@* @using System.Globalization *@
+
+
+<div class="titulo">
+    <h1>Autores</h1>
+</div>
+
+
+<div class="subtitulo">
+    <h2>Lista com todos os Autores cadastrados</h2>
+</div>
+
+<div class="exibir-tabela">
+    <QuickGrid Items="autores.AsQueryable()" TGridItem="Autor" Pagination="paginacao" class="table">
+        <PropertyColumn Property="@(a => a.Id)" Title="Id" />
+        <TemplateColumn Title="Nome">
+            <span class="texto-cortado" title="@context.Nome">
+                @context.Nome
+            </span>
+        </TemplateColumn>
+        <PropertyColumn Property="@(a => a.Pais)" Title="País de Nascimento" />        
+        <TemplateColumn Title="Data de Nascimento">
+            @(context.Nascimento?.ToString("dd/MM/yyyy") ?? "-")
+        </TemplateColumn>
+        <TemplateColumn Title="Ações">
+            <button class="btn btn-sm btn-primary" @onclick="() => Editar(context)">
+                Editar
+            </button>
+            <button class="btn btn-sm btn-danger" @onclick="() => Excluir(context)">
+                Excluir
+            </button>
+        </TemplateColumn>
+    </QuickGrid>
+    <Paginator State="paginacao" />
+</div>
+
+
+
+@if (exibirPainelInicial) {
+    <div class="acessar-cadastro">
+        <h3>Para cadastrar um novo autor, clique abaixo:</h3>
+        <button class="mt-3 btn btn-primary" @onclick="ExibirPainelCadastro">
+            Cadastrar autor
+        </button>        
+    </div>
+}
+
+@if (exibirPainelCadastro) {
+    <div class="form-container">
+
+        <div class="subtitulo">
+            <h2>@menuInclusaoTitulo</h2>          
+        </div>
+
+        <EditForm Model="@autorAtual" OnValidSubmit="Confirmar" OnInvalidSubmit="TratarErros" >
+            <DataAnnotationsValidator /> 
+            <label class="text-muted mt-2">Nome</label>
+            <InputText @bind-Value=autorAtual.Nome class="form-control" name="nome"></InputText>
+            <ValidationMessage For="@(() => autorAtual.Nome)" />
+            <label class="text-muted mt-2">País de Nascimento</label>
+            <InputText @bind-Value=autorAtual.Pais class="form-control" name="pais"></InputText>
+            <ValidationMessage For="@(() => autorAtual.Pais)" />
+            <label class="text-muted mt-2">Data de Nascimento</label>
+            <InputDate @bind-Value=autorAtual.Nascimento class="form-control" name="nascimento"></InputDate>
+            <ValidationMessage For="@(() => autorAtual.Nascimento)" /> 
+            <button type="submit" class="mt-3 btn btn-primary" >
+                @menuInclusaoBotao
+            </button>
+        </EditForm>
+    </div>
+}
+
+<div class="subtitulo">
+    <h2>Busca por Nome do Autor</h2>
+</div>
+
+<div class="form-container">
+    <EditForm Model="@buscaPorNomeAutor" OnValidSubmit="PesquisaPorNome">
+        <label class="text-muted mt-3">Nome do Autor</label>
+        <InputText @bind-Value=buscaPorNomeAutor class="form-control" name="Nome"></InputText>
+        <button type="submit" class="mt-3 btn btn-primary">Pesquisar</button>
+    </EditForm>
+</div>
+
+@if(autorByName.Count > 0) {
+    <div class="exibir-tabela">
+        <QuickGrid Items="autorByName.AsQueryable()" TGridItem="Autor" Pagination="paginacaoGetByName" class="table" >
+            <PropertyColumn Property="@(a => a.Id)" Title="Id" />
+            <TemplateColumn Title="Nome">
+                <span class="texto-cortado" title="@context.Nome">
+                    @context.Nome
+                </span>
+            </TemplateColumn>
+            <PropertyColumn Property="@(a => a.Pais)" Title="País de Nascimento" />
+            <TemplateColumn Title="Data de Nascimento">
+                @(context.Nascimento?.ToString("dd/MM/yyyy") ?? "-")
+            </TemplateColumn>
+        </QuickGrid>
+        <Paginator State="paginacaoGetByName" />
+    </div>
+}
+
+
+
+
+
+
+<div class="subtitulo">
+    <h2>Busca por País de Nascimento</h2>
+</div>
+
+
+<div class="form-container">
+    <EditForm Model="@buscaPorPaisAutor" OnValidSubmit="PesquisaPorPaisNascimento">
+        <label class="text-muted mt-3">País de Nascimento</label>
+        <InputText @bind-Value=buscaPorPaisAutor class="form-control" name="Pais"></InputText>
+        <button type="submit" class="mt-3 btn btn-primary">Pesquisar</button>
+    </EditForm>
+</div>
+
+@if (autorByPais.Count > 0)
+{
+    <div class="exibir-tabela">
+        <QuickGrid Items="autorByPais.AsQueryable()" TGridItem="Autor" Pagination="paginacaoGetByPais" class="table">
+            <PropertyColumn Property="@(a => a.Id)" Title="Id" />
+            <TemplateColumn Title="Nome">
+                <span class="texto-cortado" title="@context.Nome">
+                    @context.Nome
+                </span>
+            </TemplateColumn>
+            <PropertyColumn Property="@(a => a.Pais)" Title="País de Nascimento" />
+            <TemplateColumn Title="Data de Nascimento">
+                @(context.Nascimento?.ToString("dd/MM/yyyy") ?? "-")
+            </TemplateColumn>            
+        </QuickGrid>
+        <Paginator State="paginacaoGetByPais" />
+    </div>
+} 
+
+
+
+
+
+<div class="subtitulo">
+    <h2>Busca por Id</h2>
+    <p>Mostra as informações do Autor desejado e também seus livros publicados.</p>
+</div>
+
+<div class="form-container">
+    <EditForm Model="@buscaPorIdAutor" OnValidSubmit="PesquisaPorId" OnInvalidSubmit="TratarErros" >
+        <label class="text-muted mt-3">Id</label>
+        <InputNumber TValue="int" @bind-Value="buscaPorIdAutor" class="form-control" name="Id"></InputNumber>
+        <button type="submit" class="mt-3 btn btn-primary">Pesquisar</button>
+    </EditForm>
+</div>
+
+@if(autorById.Id != 0) {
+    <div class="dados-usuario-busca-id">        
+        <h3>Dados do Autor:</h3>
+        <p>Nome: @autorById.Nome</p>
+        <p>País de Nascimento: @autorById.Pais</p>        
+        <p>Data de Nascimento: @(autorById.Nascimento?.ToString("dd/MM/yyyy") ?? "-")</p>
+    </div>
+}
+
+@if (autorLivros.Count > 0){
+    <div class="subtitulo">
+        <h3> Livros do autor:</h3>
+    </div>
+    <div class="exibir-tabela">
+        <QuickGrid Items="autorLivros.AsQueryable()" TGridItem="AutorLivros" Pagination="paginacaoLivros" class="table">
+            <TemplateColumn Title="Título do Livro">
+                <span class="texto-cortado" title="@context.Titulo">
+                    @context.Titulo
+                </span>
+            </TemplateColumn>                    
+        </QuickGrid>
+        <Paginator State="paginacaoLivros" />
+    </div>
+}
+@if (autorById.Id > 0 && autorLivros.Count == 0){   
+    <div class="subtitulo">
+        <h3> Autor não possui livros cadastrados </h3>
+    </div>
+}
+
+
+
+<Modal 
+    Mostrar="@mostrarModal"
+    MostrarChanged="@((bool v) => mostrarModal = v)"
+    Titulo="@tituloModal"
+    Mensagem="@mensagemModal" 
+/>
+
+
+
+
+@code {
+
+    private Boolean exibirPainelCadastro = false;
+    private Boolean exibirPainelInicial = true;
+    private string edicaoOuInclusao = "";
+    private string menuInclusaoTitulo = "";
+    private string menuInclusaoBotao = "";      
+
+    string msg = "";
+
+    //Variaveis para o GetAll    
+    private List<Autor> autores = new();
+    private Autor autorAtual = new(); 
+    PaginationState paginacao = new()    {
+        ItemsPerPage = 10
+    };
+
+    //Variaveis para o GetByName
+    private List<Autor> autorByName = new();
+    private string buscaPorNomeAutor = "";
+    PaginationState paginacaoGetByName = new()    {
+        ItemsPerPage = 10
+    };
+
+    //Variaveis para o GetByPaisNascimento
+    private List<Autor> autorByPais = new();
+    private string buscaPorPaisAutor = "";
+    PaginationState paginacaoGetByPais = new()    {
+        ItemsPerPage = 10
+    };
+
+    //Variaveis para o GetById
+    private int buscaPorIdAutor = 0;
+    private Autor autorById = new();    
+    private List<AutorLivros> autorLivros = new();
+    PaginationState paginacaoLivros = new()    {
+        ItemsPerPage = 10
+    };
+
+
+    //Variaveis Modal
+    bool mostrarModal = false;
+    string tituloModal = "Erro";
+    string mensagemModal = "Nenhum usuário encontrado";
+
+
+
+    protected override void OnInitialized()    {
+        exibirPainelCadastro = false;
+        exibirPainelInicial = true;
+    }
+
+    protected override async Task OnInitializedAsync()    {
+        await GettAllAutores();
+    }
+
+    async Task GettAllAutores() {        
+        string api = "api/autor";
+        autores = new();
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            autores = await response.Content.ReadFromJsonAsync<List<Autor>>();           
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            AbrirModal("Aviso", "Erro ao carregar os autores.");
+        }
+    }
+
+    async Task PostAutor() {       
+        string api = "api/autor";
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.PostAsJsonAsync(api, autorAtual);
+        if (response.IsSuccessStatusCode) {
+            msg = "Autor incluído com sucesso";    
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();    
+        }
+        //Atualizar a lista de usuários
+        await GettAllAutores();
+    }
+
+    async Task PutAutor()    {
+        string api = "api/autor/"+autorAtual.Id;
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.PutAsJsonAsync(api, autorAtual);
+        if (response.IsSuccessStatusCode)        {
+            msg = "Autor atualizado com sucesso";
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+        }
+        //Atualizar a lista de usuários
+        await GettAllAutores();
+    }
+
+
+
+    async Task Excluir(Autor autor)    {
+
+        string api = $"api/autor/{autor.Id}";
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.DeleteAsync(api);
+        if (response.IsSuccessStatusCode)        {
+            msg = "Autor deletado com sucesso";
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+        }
+        //Atualizar a lista de usuários
+        await GettAllAutores();      
+        EsconderPainelCadastro(); 
+        AbrirModal("Efetivado", "Usuário deletado com sucesso.");
+    }
+
+
+
+    //getById
+    async Task PesquisaPorId()    {
+        autorById = new();        
+        autorLivros = new();
+
+        if (buscaPorIdAutor <= 0)   {
+            msg = "Digite um id";
+            AbrirModal("Aviso", "Escolha um valor válido.");
+            return;
+        }
+
+        //GetById
+        string api = $"api/autor/{buscaPorIdAutor}";        
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            if (response.Content.Headers.ContentLength == 0)            {
+                AbrirModal("Aviso", "Autor não encontrado");
+                return;
+            }
+            autorById = await response.Content.ReadFromJsonAsync<Autor>();   
+
+            //GetLivrosLancados
+            api = $"api/autor/{buscaPorIdAutor}/livroslancados";
+            httpClient = factory.CreateClient("api");
+            response = await httpClient.GetAsync(api);
+
+            if (response.IsSuccessStatusCode)            {
+                autorLivros = await response.Content.ReadFromJsonAsync<List<AutorLivros>>();
+            }
+            else            {
+                msg = await response.Content.ReadAsStringAsync();
+            }
+
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            Console.WriteLine(msg);
+            AbrirModal("Aviso", "A busca realizada não retornou dados.");
+        }
+
+    }
+
+    //GetByName
+    async Task PesquisaPorNome()    {
+        if (string.IsNullOrWhiteSpace(buscaPorNomeAutor))        {
+            msg = "Digite um nome";
+            return;
+        }
+        string api = $"api/autor/busca?nome={buscaPorNomeAutor}";
+        autorByName = new();
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            autorByName = await response.Content.ReadFromJsonAsync<List<Autor>>();
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            AbrirModal("Aviso", "A busca realizada não retornou dados.");  
+        }
+    }
+
+    //GetByPaisNascimento
+    async Task PesquisaPorPaisNascimento()    {
+        if (string.IsNullOrWhiteSpace(buscaPorPaisAutor))        {
+            msg = "Digite um nome";
+            return;
+        }
+        string api = $"api/autor/busca?pais={buscaPorPaisAutor}";
+        autorByPais = new();
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            autorByPais = await response.Content.ReadFromJsonAsync<List<Autor>>();
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            AbrirModal("Aviso", "A busca realizada não retornou dados.");
+        }
+    }
+
+    async Task Confirmar()    {
+        Console.WriteLine("edicaoouinclusao = " + edicaoOuInclusao);
+        if (edicaoOuInclusao == "inclusao")        {            
+            await PostAutor();
+            AbrirModal("Efetivado","Autor cadastrado com sucesso.");
+        }
+        else if (edicaoOuInclusao == "alteracao")        {            
+            await PutAutor();
+            AbrirModal("Efetivado", "Autor atualizado com sucesso.");
+        }
+        else        {
+            Console.WriteLine("Erro ao incluir/atualizar dados.");
+        }
+        EsconderPainelCadastro();
+    }
+
+
+    void Editar(Autor autor)    {
+        Console.WriteLine("Editar");
+
+        exibirPainelInicial = false;
+        exibirPainelCadastro = true;
+
+        autorAtual.Nome = autor.Nome;
+        autorAtual.Id = autor.Id;
+        autorAtual.Pais = autor.Pais;
+        autorAtual.Nascimento = autor.Nascimento;
+
+        edicaoOuInclusao = "alteracao";
+        menuInclusaoTitulo = "Alteração de Usuário";
+        menuInclusaoBotao = "Salvar dados";
+    }
+
+    void ExibirPainelCadastro()    {
+        exibirPainelInicial = false;
+        exibirPainelCadastro = true;
+        autorAtual = new();
+        edicaoOuInclusao = "inclusao";
+        menuInclusaoTitulo = "Cadastrar um novo Autor";
+        menuInclusaoBotao = "Incluir Autor";
+    }
+
+    void EsconderPainelCadastro()    {
+        exibirPainelInicial = true;
+        exibirPainelCadastro = false;
+        autorAtual = new();
+    }
+
+    void TratarErros()    {
+        Console.WriteLine("Dados inválidos.");
+    }
+
+    void AbrirModal(string titulo, string mensagem)    {
+        tituloModal = titulo;
+        mensagemModal = mensagem;
+        mostrarModal = true;
+    }
+
+}
+
+

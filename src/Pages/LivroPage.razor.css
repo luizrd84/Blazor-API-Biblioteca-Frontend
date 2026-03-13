@@ -1,0 +1,70 @@
+﻿.titulo {
+    text-align: center;
+    margin-bottom: 3em;
+}
+
+.subtitulo {
+    text-align: center;
+}
+
+.texto-cortado {
+    display: block;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.exibir-tabela {
+    margin: 0 auto;
+    width: 80%;
+}
+
+.form-container {
+    width: 40%;
+    margin: 0 auto;
+    margin-bottom: 6em;
+    margin-top: 3em;
+}
+
+    .form-container button {
+        display: block;
+        margin: 0 auto;
+        width: 15em;
+        font-weight: bold;
+    }
+
+.acessar-cadastro {
+    margin-top: 3em;
+    margin-bottom: 6em;
+    text-align: center;
+    
+
+}
+
+.dados-usuario-busca-id {
+    text-align: center;
+    margin-bottom: 4em;
+}
+
+.dados-usuario-busca-id h3 {
+    margin-bottom: 1.5em;
+}
+
+.dados-usuario-busca-id p {
+    font-size: 20px;
+}
+
+
+::deep table {
+    border-collapse: collapse;
+    width: 100%;
+}
+/* Garante que linhas sem conteúdo não tenham altura ou bordas visíveis */
+::deep tr:empty {
+    display: none;
+}
+/* Se o problema forem células fantasmas em linhas existentes */
+::deep td:empty {
+    border: none;
+}

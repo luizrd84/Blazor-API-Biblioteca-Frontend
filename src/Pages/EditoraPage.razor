@@ -1,0 +1,492 @@
+﻿@page "/editoras"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using _03Blazor_Biblioteca.src.Components
+@using src.Models
+@rendermode InteractiveServer
+@inject IHttpClientFactory factory
+@using System.Text.Json
+
+
+
+<div class="titulo">
+    <h1>Editoras</h1>
+</div>
+
+
+<div class="subtitulo">
+    <h2>Lista com todas as editoras cadastradas</h2>
+</div>
+
+<div class="exibir-tabela">
+    <QuickGrid Items="editoras.AsQueryable()" TGridItem="Editora" Pagination="paginacao" class="table">
+        <PropertyColumn Property="@(e => e.Id)" Title="Id" />
+        <TemplateColumn Title="Nome da Editora">
+            <span class="texto-cortado" title="@context.Nome">
+                @context.Nome
+            </span>
+        </TemplateColumn>
+        <PropertyColumn Property="@(p => p.Pais)" Title="País" />               
+        <TemplateColumn Title="Ações">
+            <button class="btn btn-sm btn-primary" @onclick="() => Editar(context)">
+                Editar
+            </button>
+            <button class="btn btn-sm btn-danger" @onclick="() => Excluir(context)">
+                Excluir
+            </button>
+        </TemplateColumn>
+    </QuickGrid>
+    <Paginator State="paginacao" />
+</div>
+
+
+
+@if (exibirPainelInicial) {
+    <div class="acessar-cadastro">
+        <h3>Para cadastrar uma nova editora, clique abaixo:</h3>
+        <button class="mt-3 btn btn-primary" @onclick="ExibirPainelCadastro">
+            Cadastrar editora
+        </button>        
+    </div>
+}
+
+@if (exibirPainelCadastro) {
+    <div class="form-container">
+
+        <div class="subtitulo">
+            <h2>@menuInclusaoTitulo</h2>          
+        </div>
+
+        <EditForm Model="@editoraAtual" OnValidSubmit="Confirmar" OnInvalidSubmit="TratarErros">
+            <DataAnnotationsValidator /> 
+            <label class="text-muted mt-2">Nome</label>
+            <InputText @bind-Value=editoraAtual.Nome class="form-control" name="nome"></InputText>
+            <ValidationMessage For="@(() => editoraAtual.Nome)" />
+            <label class="text-muted mt-2">País</label>
+            <InputText @bind-Value=editoraAtual.Pais class="form-control" name="pais"></InputText>
+            <ValidationMessage For="@(() => editoraAtual.Pais)" />
+            <button type="submit" class="mt-3 btn btn-primary" >
+                @menuInclusaoBotao
+            </button>
+        </EditForm>
+    </div>
+}
+
+<div class="subtitulo">
+    <h2>Busca por Nome</h2>
+</div>
+
+
+<div class="form-container">
+    <EditForm Model="@buscaPorNome" OnValidSubmit="PesquisaPorNome">
+        <label class="text-muted mt-3">Nome</label>
+        <InputText @bind-Value=buscaPorNome class="form-control" name="Nome"></InputText>
+        <button type="submit" class="mt-3 btn btn-primary">Pesquisar</button>
+    </EditForm>
+</div>
+
+@if(editorasByName.Count > 0) {
+    <div class="exibir-tabela">
+        <QuickGrid Items="editorasByName.AsQueryable()" TGridItem="Editora" Pagination="paginacaoGetByName" class="table">
+            <PropertyColumn Property="@(e => e.Id)" Title="Id" />
+            <TemplateColumn Title="Nome da Editora">
+                <span class="texto-cortado" title="@context.Nome">
+                    @context.Nome
+                </span>
+            </TemplateColumn>
+            <PropertyColumn Property="@(e => e.Pais)" Title="País" />                        
+        </QuickGrid>
+        <Paginator State="paginacaoGetByName" />
+    </div>
+}
+
+<div class="subtitulo">
+    <h2>Busca por País de Origem</h2>
+</div>
+
+
+<div class="form-container">
+    <EditForm Model="@buscaPorPaisEditora" OnValidSubmit="PesquisaPorPais">
+        <label class="text-muted mt-3">País</label>
+        <InputText @bind-Value=buscaPorPaisEditora class="form-control" name="Pais"></InputText>
+        <button type="submit" class="mt-3 btn btn-primary">Pesquisar</button>
+    </EditForm>
+</div>
+
+@if (editorasByPais.Count > 0)
+{
+    <div class="exibir-tabela">
+        <QuickGrid Items="editorasByPais.AsQueryable()" TGridItem="Editora" Pagination="paginacaoGetByPais" class="table">
+            <PropertyColumn Property="@(e => e.Id)" Title="Id" />
+            <TemplateColumn Title="Nome">
+                <span class="texto-cortado" title="@context.Nome">
+                    @context.Nome
+                </span>
+            </TemplateColumn>
+            <PropertyColumn Property="@(e => e.Pais)" Title="País" />            
+        </QuickGrid>
+        <Paginator State="paginacaoGetByPais" />
+    </div>
+}
+
+
+
+
+<div class="subtitulo">
+    <h2>Busca por Id</h2>
+    <p>Mostra os dados da editora desejada, seus livros publicados e autores parceiros.</p>
+</div>
+
+<div class="form-container">
+    <EditForm Model="@buscaPorId" OnValidSubmit="PesquisaPorId" OnInvalidSubmit="TratarErros" >
+        <label class="text-muted mt-3">Id</label>
+        <InputNumber TValue="int" @bind-Value="buscaPorId" class="form-control" name="Id"></InputNumber>
+        <button type="submit" class="mt-3 btn btn-primary">Pesquisar</button>
+    </EditForm>
+</div>
+
+@if(editoraById.Id != 0) {
+    <div class="dados-usuario-busca-id">        
+        <h3>Dados da editora:</h3>
+        <p>Nome: @editoraById.Nome</p>
+        <p>País: @editoraById.Pais</p>        
+    </div>
+}
+
+@if (editoraLivros.Count > 0)
+{
+    <div class="subtitulo">
+        <h3> Livros publicados pela editora:</h3>
+    </div>
+    <div class="exibir-tabela">
+        <QuickGrid Items="editoraLivros.AsQueryable()" TGridItem="EditoraLivros" Pagination="paginacaoLivros" class="table">
+            <TemplateColumn Title="Título do Livro">
+                <span class="texto-cortado" title="@context.Titulo">
+                    @context.Titulo
+                </span>
+            </TemplateColumn>
+            <PropertyColumn Property="@(e => e.Autor)" Title="Autor" />            
+        </QuickGrid>
+        <Paginator State="paginacaoLivros" />
+    </div>
+}
+@if (editoraById.Id > 0 && editoraLivros.Count == 0){   
+    <div class="subtitulo">
+        <h3> Editora não possui livros cadastrados </h3>
+    </div>
+}
+
+@if (editoraParceiros.Count > 0){
+    <div class="subtitulo">
+        <h3> Autores parceiros:</h3>
+    </div>
+    <div class="exibir-tabela">
+        <QuickGrid Items="editoraParceiros.AsQueryable()" TGridItem="EditoraParceiros" Pagination="paginacaoParceiros" class="table">
+            <TemplateColumn Title="Autor Parceiro">
+                <span class="texto-cortado" title="@context.Autor">
+                    @context.Autor
+                </span>
+            </TemplateColumn>                        
+        </QuickGrid>
+        <Paginator State="paginacaoParceiros" />
+    </div>
+}
+@if (editoraById.Id > 0 && editoraParceiros.Count == 0) {
+    <div class="subtitulo">
+        <h3> Editora não possui autores parceiros cadastrados </h3>
+    </div>
+}
+
+
+<Modal 
+    Mostrar="@mostrarModal"
+    MostrarChanged="@((bool v) => mostrarModal = v)"
+    Titulo="@tituloModal"
+    Mensagem="@mensagemModal" 
+/>
+
+
+
+
+@code {
+    private Boolean exibirPainelCadastro = false;
+    private Boolean exibirPainelInicial = true;
+    private string edicaoOuInclusao = "";
+    private string menuInclusaoTitulo = "";
+    private string menuInclusaoBotao = "";      
+
+    //Exibir via modal isso???? ver como fazer
+    string msg = "";
+
+    //Variaveis par ao GetAll    
+    private List<Editora> editoras = new();
+    private Editora editoraAtual = new(); 
+    PaginationState paginacao = new()    {
+        ItemsPerPage = 10
+    };
+
+    //Variaveis par ao GetByName
+    private List<Editora> editorasByName = new();
+    private string buscaPorNome = "";
+    PaginationState paginacaoGetByName = new()    {
+        ItemsPerPage = 10
+    };
+
+    //Variaveis para o GetByPais
+    private List<Editora> editorasByPais = new();
+    private string buscaPorPaisEditora = "";
+    PaginationState paginacaoGetByPais = new()    {
+        ItemsPerPage = 10
+    };
+
+    //Variaveis par ao GetById
+    private int buscaPorId = 0;
+    private Editora editoraById = new();    
+    private List<EditoraLivros> editoraLivros = new();
+    private List<EditoraParceiros> editoraParceiros = new();
+    PaginationState paginacaoLivros = new()    {
+        ItemsPerPage = 10
+    };
+    PaginationState paginacaoParceiros = new()    {
+        ItemsPerPage = 10
+    };
+
+    //Variaveis Modal
+    bool mostrarModal = false;
+    string tituloModal = "Erro";
+    string mensagemModal = "Nenhum usuário encontrado";
+
+
+
+    protected override void OnInitialized()    {
+        exibirPainelCadastro = false;
+        exibirPainelInicial = true;
+    }
+
+    protected override async Task OnInitializedAsync()    {
+        await GettAllEditoras();
+    }
+
+    async Task GettAllEditoras() {        
+        string api = "api/editoras";
+        editoras = new();
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            editoras = await response.Content.ReadFromJsonAsync<List<Editora>>();
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            AbrirModal("Aviso", "Erro ao carregar as Editoras.");
+        }
+    }
+
+    async Task PostUsuario() {       
+        string api = "api/editoras";
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.PostAsJsonAsync(api, editoraAtual);
+        if (response.IsSuccessStatusCode) {
+            msg = "Editora incluída com sucesso";
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();    
+        }
+        //Atualizar a lista de usuários
+        await GettAllEditoras();
+    }
+
+    async Task PutUsuario()    {
+        string api = "api/editoras/" + editoraAtual.Id;
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.PutAsJsonAsync(api, editoraAtual);
+        if (response.IsSuccessStatusCode)        {
+            msg = "Editora atualizada com sucesso";
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+        }
+        //Atualizar a lista de usuários
+        await GettAllEditoras();
+    }
+
+
+
+    async Task Excluir(Editora editora)    {
+
+        string api = $"api/editoras/{editora.Id}";
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.DeleteAsync(api);
+        if (response.IsSuccessStatusCode)        {
+            msg = "Editora deletada com sucesso";
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+        }
+        //Atualizar a lista de usuários
+        await GettAllEditoras();      
+        EsconderPainelCadastro(); 
+        AbrirModal("Efetivado", "Editora deletada com sucesso.");
+    }
+
+
+
+    //getById
+    async Task PesquisaPorId()    {
+        editoraById = new();
+        editoraLivros = new();
+        editoraParceiros = new();
+
+        if (buscaPorId <= 0)   {
+            msg = "Digite um id";
+            AbrirModal("Aviso", "Escolha um valor válido.");
+            return;
+        }
+
+        //GetById
+        string api = $"api/editoras/{buscaPorId}";
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            if (response.Content.Headers.ContentLength == 0)            {
+                AbrirModal("Aviso", "Editora não encontrada");
+                return;
+            }
+            editoraById = await response.Content.ReadFromJsonAsync<Editora>();
+
+            //GetLivrosPublicados
+            api = $"api/editoras/{buscaPorId}/livrospublicados";
+            httpClient = factory.CreateClient("api");
+            response = await httpClient.GetAsync(api);
+
+            if (response.IsSuccessStatusCode)            {
+                editoraLivros = await response.Content.ReadFromJsonAsync<List<EditoraLivros>>();
+            }
+            else            {
+                msg = await response.Content.ReadAsStringAsync();
+            }
+            //GetAutoresParceiros
+            api = $"api/editoras/{buscaPorId}/autoresparceiros";
+            httpClient = factory.CreateClient("api");
+            response = await httpClient.GetAsync(api);
+
+            if (response.IsSuccessStatusCode)            {
+                editoraParceiros = await response.Content.ReadFromJsonAsync<List<EditoraParceiros>>();
+            }
+            else            {
+                msg = await response.Content.ReadAsStringAsync();
+            }
+
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            Console.WriteLine(msg);
+            AbrirModal("Aviso", "A busca realizada não retornou dados.");
+        }
+
+    }
+
+    //GetByName
+    async Task PesquisaPorNome()    {
+        if (string.IsNullOrWhiteSpace(buscaPorNome))        {
+            msg = "Digite um nome";
+            return;
+        }
+        string api = $"api/editoras/busca?nome={buscaPorNome}";
+        editorasByName = new();
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            editorasByName = await response.Content.ReadFromJsonAsync<List<Editora>>();
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            AbrirModal("Aviso", "A busca realizada não retornou dados.");  
+        }
+    }
+
+    //GetByPais
+    async Task PesquisaPorPais()
+    {
+        if (string.IsNullOrWhiteSpace(buscaPorPaisEditora))        {
+            msg = "Digite um nome";
+            return;
+        }
+        string api = $"api/editoras/busca?pais={buscaPorPaisEditora}";
+        editorasByPais = new();
+        var httpClient = factory.CreateClient("api");
+        HttpResponseMessage response = await httpClient.GetAsync(api);
+
+        if (response.IsSuccessStatusCode)        {
+            editorasByPais = await response.Content.ReadFromJsonAsync<List<Editora>>();
+        }
+        else        {
+            msg = await response.Content.ReadAsStringAsync();
+            AbrirModal("Aviso", "A busca realizada não retornou dados.");
+        }
+    }
+
+
+    async Task Confirmar()    {
+        Console.WriteLine("edicaoouinclusao = " + edicaoOuInclusao);
+        if (edicaoOuInclusao == "inclusao")        {            
+            await PostUsuario();
+            AbrirModal("Efetivado","Editora cadastrada com sucesso.");
+        }
+        else if (edicaoOuInclusao == "alteracao")        {            
+            await PutUsuario();
+            AbrirModal("Efetivado", "Editora atualizada com sucesso.");
+        }
+        else        {
+            Console.WriteLine("Erro ao incluir/atualizar dados.");
+        }
+        EsconderPainelCadastro();
+    }
+
+
+    void Editar(Editora editora)
+    {
+        Console.WriteLine("Editar");
+
+        exibirPainelInicial = false;
+        exibirPainelCadastro = true;
+
+        editoraAtual.Id = editora.Id;
+        editoraAtual.Nome = editora.Nome;
+        editoraAtual.Pais = editora.Pais;
+        
+
+        edicaoOuInclusao = "alteracao";
+        menuInclusaoTitulo = "Alteração de Editora";
+        menuInclusaoBotao = "Salvar dados";
+    }
+
+    void ExibirPainelCadastro()    {
+        exibirPainelInicial = false;
+        exibirPainelCadastro = true;
+        editoraAtual = new();
+        edicaoOuInclusao = "inclusao";
+        menuInclusaoTitulo = "Cadastrar uma nova Editora";
+        menuInclusaoBotao = "Incluir Editora";
+    }
+
+    void EsconderPainelCadastro()    {
+        exibirPainelInicial = true;
+        exibirPainelCadastro = false;
+        editoraAtual = new();
+    }
+
+    void TratarErros()    {
+        Console.WriteLine("Dados inválidos.");
+    }
+
+    void AbrirModal(string titulo, string mensagem)    {
+        tituloModal = titulo;
+        mensagemModal = mensagem;
+        mostrarModal = true;
+    }
+
+}
+
+
